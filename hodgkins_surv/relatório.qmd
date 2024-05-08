@@ -1,0 +1,103 @@
+---
+title: "Análise de Curvas de Sobrevivência da Doença de Hodgkins"
+author: "Baetriz Lima Silveira"
+format: pdf
+editor: visual
+---
+
+```{r libs and data, warning=FALSE, include=FALSE}
+
+library(readxl) # load data
+library(survival) # survival analysis
+library(survminer) # graph plot
+library(summarytools) # tabela descritiva
+
+dt <- read_excel("Lista2_Hodgkins.xlsx")
+
+dt$sex <- factor(dt$sex,
+                 levels = c("0","1"),
+                 labels = c("Feminino","Masculino"))
+
+dt$stage <- factor(dt$stage,
+                   levels = c("0","1"),
+                   labels = c("inicial", "avançado"))
+
+dt$hist <- factor(dt$hist,
+                  levels = c(1,2,3),
+                  labels = c("esclerose nodular", "misto celular",
+                             "depleção linfótica"))
+
+dt$age_cat <- ifelse(dt$age < 25, "Menos de 25",
+                     ifelse(dt$age <= 37, "25-37",
+                            ifelse(dt$age <= 52, "38-52", "53 ou mais")))
+
+st_options(lang = "pt")
+
+```
+
+## Introduçao
+
+Nesse relatório sera avaliado por meio de métodos de análise de sobrevivência, 60 pacientes com doença de Hodgkins que receberam tratamento padrão. O tempo de vida (em meses), bem como idade, sexo, histologia e estágio da doença de cada paciente foi observado.
+
+## Análise Descritiva da Amostra
+
+```{r, warning=FALSE, echo=FALSE}
+st_options(lang = "pt")
+knitr::kable(
+  dfSummary(dt[c("sex", "stage", "hist", "age_cat")],
+                       style = "grid",
+                       method = "pander",
+                       valid.col = F,
+                       plain.ascii  = TRUE,
+                       headings     = FALSE,
+                       na.col       = FALSE,
+                       varnumbers   = FALSE,
+                       tmp.img.dir  = "/tmp"
+                        ),
+             format = "latex"
+)
+```
+
+## Comparação de sobrevivência entre sexos
+
+Calculando as curvas de Kaplan Meier para agrupamento de sexo, observa-se curvas com comportamento diferentes.
+
+```{r sex graph, echo=FALSE, warning=FALSE}
+
+
+fit_sex <- survfit(Surv(time = survivaltime, event = dead) ~ sex,
+                       data = dt)
+
+fit_hist <- survfit(Surv(time = survivaltime, event = dead) ~ hist,
+                       data = dt)
+
+fit_age <- survfit(Surv(time = survivaltime, event = dead) ~ age_cat,
+                               data = dt)
+
+ggsurvplot(fit_sex, data = dt,
+           pval = TRUE, conf.int = TRUE, conf.int.style = "step",
+           ylab = "Sobrevida", xlab = "Tempo em dias", legend.title = "Sexo")
+```
+
+| Col1 | Col2 | Col3 |
+|------|------|------|
+|      |      |      |
+|      |      |      |
+|      |      |      |
+
+: Tabela 2- Teste de Log-Rank para cuvas de sexo
+
+\\begin{table}\[htbp\]
+\\centering
+\\caption{Resultados do Teste de Log-Rank}
+\\begin{tabular}{lcccc}
+\\toprule
+Grupo & N & Observados & Esperados & Estatística de Teste (Chisq) \\\\
+\\midrule
+Feminino & 18 & 9 & 8.57 & 0.02132 \\\\
+Masculino & 42 & 21 & 21.43 & 0.00853 \\\\
+\\bottomrule
+\\multicolumn{5}{l}{Chisq= 0, df= 1, p= 0.9} \\\\
+\\end{tabular}
+\\label{tab:resultados_logrank}
+\\end{table}
